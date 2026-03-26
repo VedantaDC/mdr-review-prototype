@@ -85,6 +85,14 @@ button {
   letter-spacing: -0.04em;
 }
 
+.header-link-button {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  color: #ab6035;
+  font-weight: 700;
+}
+
 .eyebrow {
   margin: 0;
   color: #ab6035;
@@ -109,6 +117,7 @@ button {
   background: rgba(255, 255, 255, 0.74);
   box-shadow: 0 14px 32px rgba(38, 53, 67, 0.08);
   backdrop-filter: blur(10px);
+  text-align: left;
 }
 
 .reviewer-badge span,
@@ -211,6 +220,7 @@ button {
 .search-workbench,
 .dashboard-toolbar,
 .dashboard-prompt-card,
+.presentation-toolbar,
 .dashboard-date-range-card,
 .card,
 .metric-card {
@@ -436,6 +446,170 @@ button {
   box-shadow: 0 16px 36px rgba(35, 44, 53, 0.08);
   backdrop-filter: blur(10px);
   padding: 16px 20px;
+  align-items: flex-start;
+}
+
+.queue-action-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  flex: 1;
+}
+
+.queue-action-heading span,
+.highlight-terms-field span,
+.profile-reassign-grid span {
+  color: #6b7a7f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.queue-action-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.highlight-terms-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 360px;
+}
+
+.highlight-terms-field input,
+.profile-reassign-grid input,
+.profile-reassign-grid select {
+  width: 100%;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(23, 61, 66, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.review-set-banner {
+  min-height: 0;
+}
+
+.presentation-toolbar {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+}
+
+.presentation-slide {
+  min-height: 520px;
+  padding: 34px;
+  background:
+    radial-gradient(circle at top right, rgba(210, 111, 54, 0.14), transparent 28%),
+    linear-gradient(145deg, rgba(255, 255, 255, 0.92), rgba(247, 244, 235, 0.94));
+}
+
+.presentation-slide-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  align-items: flex-start;
+  margin-bottom: 26px;
+}
+
+.presentation-slide-header h2 {
+  margin: 8px 0 0;
+  font-size: clamp(2rem, 3.6vw, 3.1rem);
+  line-height: 1.05;
+  letter-spacing: -0.04em;
+  max-width: 14ch;
+}
+
+.presentation-counter {
+  color: #6c7b80;
+  font-size: 0.9rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.presentation-slide-body {
+  display: grid;
+  grid-template-columns: 1.35fr 0.9fr;
+  gap: 28px;
+  align-items: stretch;
+}
+
+.presentation-bullets {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.presentation-bullet {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 16px;
+  align-items: start;
+  padding: 18px 20px;
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.68);
+  border: 1px solid rgba(23, 61, 66, 0.08);
+}
+
+.presentation-bullet p {
+  margin: 0;
+  font-size: 1.06rem;
+  color: #25383f;
+}
+
+.presentation-bullet-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-top: 4px;
+  background: linear-gradient(180deg, #d26f36 0%, #173d42 100%);
+}
+
+.presentation-accent-panel {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 100%;
+  padding: 28px;
+  border-radius: 26px;
+  background: linear-gradient(160deg, #173d42 0%, #24565d 100%);
+  color: #f7f4eb;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+.presentation-accent-panel .eyebrow {
+  color: rgba(247, 244, 235, 0.8);
+}
+
+.presentation-accent-panel h3 {
+  margin: 10px 0 0;
+  font-size: clamp(1.3rem, 2vw, 1.8rem);
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.presentation-progress {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+}
+
+.presentation-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 0;
+  background: rgba(23, 61, 66, 0.16);
+}
+
+.presentation-dot.active {
+  background: #d26f36;
+  transform: scale(1.08);
 }
 
 .table-shell {
@@ -958,6 +1132,15 @@ details summary {
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-height: 880px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.document-list-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
 .issue-card.selected {
@@ -978,6 +1161,75 @@ details summary {
   gap: 16px;
 }
 
+.issue-metrics-grid {
+  margin-top: 18px;
+}
+
+.issue-analytics-grid {
+  display: grid;
+  grid-template-columns: 1.25fr 0.9fr;
+  gap: 18px;
+  align-items: start;
+}
+
+.profile-code-item {
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(23, 61, 66, 0.07);
+}
+
+.profile-code-item:last-child {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.profile-reassign-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 18px;
+}
+
+.profile-reassign-grid label {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.documentation-review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.hp-review-card {
+  min-height: 0;
+}
+
+.documentation-comment {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 18px;
+}
+
+.documentation-comment span {
+  color: #6b7a7f;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.documentation-comment textarea {
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 16px;
+  border: 1px solid rgba(23, 61, 66, 0.12);
+  background: rgba(255, 255, 255, 0.9);
+  resize: vertical;
+  min-height: 120px;
+}
+
 .primary-button {
   padding: 12px 18px;
   border-radius: 999px;
@@ -992,6 +1244,18 @@ details summary {
   background: transparent;
   color: #ab6035;
   font-weight: 700;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.52;
+}
+
+mark {
+  background: rgba(242, 206, 119, 0.72);
+  color: inherit;
+  padding: 0 2px;
+  border-radius: 4px;
 }
 
 .sub-cell,
@@ -1018,10 +1282,12 @@ details summary {
   .dashboard-top-grid,
   .dashboard-bottom-grid,
   .dashboard-filter-grid,
+  .presentation-slide-body,
   .date-range-grid,
   .search-layout,
   .search-filter-grid,
   .issue-layout,
+  .issue-analytics-grid,
   .metrics-grid,
   .metrics-grid.compact,
   .filter-bar,
@@ -1030,6 +1296,11 @@ details summary {
   }
 
   .topbar {
+    flex-direction: column;
+  }
+
+  .presentation-toolbar,
+  .presentation-slide-header {
     flex-direction: column;
   }
 
@@ -1056,6 +1327,10 @@ details summary {
   }
 
   .advanced-filter-row {
+    grid-template-columns: 1fr;
+  }
+
+  .profile-reassign-grid {
     grid-template-columns: 1fr;
   }
 }
