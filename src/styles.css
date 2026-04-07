@@ -93,6 +93,12 @@ button {
   font-weight: 700;
 }
 
+.header-link-row {
+  display: flex;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
 .eyebrow {
   margin: 0;
   color: #ab6035;
@@ -1189,6 +1195,10 @@ details summary {
   margin-bottom: 18px;
 }
 
+.notification-grid {
+  margin-bottom: 0;
+}
+
 .profile-reassign-grid label {
   display: flex;
   flex-direction: column;
@@ -1228,6 +1238,121 @@ details summary {
   background: rgba(255, 255, 255, 0.9);
   resize: vertical;
   min-height: 120px;
+}
+
+.documentation-card-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  align-items: flex-end;
+}
+
+.documentation-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #506067;
+}
+
+.review-detail-tab-row {
+  margin-top: 16px;
+}
+
+.review-tab-grid {
+  margin-top: 16px;
+}
+
+.batch-application-note {
+  margin-top: 18px;
+}
+
+.due-date-feature-card {
+  min-height: 0;
+}
+
+.due-date-feature-card .text-button {
+  margin-top: 10px;
+}
+
+.notification-rule-actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(17, 32, 39, 0.35);
+  backdrop-filter: blur(6px);
+}
+
+.modal-card {
+  width: min(720px, 100%);
+  border: 1px solid rgba(25, 55, 60, 0.08);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.96);
+  box-shadow: 0 24px 54px rgba(35, 44, 53, 0.18);
+  padding: 24px;
+}
+
+.presentation-modal-card {
+  width: min(1080px, 100%);
+}
+
+.manager-modal-card {
+  width: min(1120px, 100%);
+}
+
+.manager-reviewer-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.manager-reviewer-card {
+  width: 100%;
+  padding: 18px;
+  border: 1px solid rgba(25, 55, 60, 0.08);
+  border-radius: 20px;
+  background: rgba(245, 248, 247, 0.9);
+  text-align: left;
+}
+
+.manager-reviewer-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.manager-reviewer-stats span {
+  display: block;
+  color: #6b7a7f;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.manager-reviewer-stats strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.2rem;
+}
+
+.presentation-slide-body.single-column {
+  grid-template-columns: 1fr;
+}
+
+.modal-actions {
+  justify-content: flex-end;
 }
 
 .primary-button {
@@ -1331,6 +1456,11 @@ mark {
   }
 
   .profile-reassign-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .manager-reviewer-grid,
+  .manager-reviewer-stats {
     grid-template-columns: 1fr;
   }
 }

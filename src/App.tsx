@@ -21,7 +21,10 @@ type TabKey =
   | 'Issue Tracker'
   | 'AI Letters'
   | 'Documentation'
+  | 'Due Dates & Notifications'
   | 'Profile';
+
+type ReviewDetailTab = 'Overview' | 'Devices' | 'Patients' | 'Contacts';
 
 const TABS: TabKey[] = [
   'Overview',
@@ -32,62 +35,109 @@ const TABS: TabKey[] = [
   'Issue Tracker',
   'AI Letters',
   'Documentation',
+  'Due Dates & Notifications',
+];
+
+const TAB_LABELS: Record<TabKey, string> = {
+  Overview: 'Overview',
+  Presentation: 'Presentation',
+  Dashboard: 'Dashboard',
+  'Routine Queue': 'Routine Review',
+  'High Priority Queue': 'High Priority Review',
+  Search: 'Search',
+  'Issue Tracker': 'Issue Tracker',
+  'AI Letters': 'AI Letters',
+  Documentation: 'Documentation',
+  'Due Dates & Notifications': 'Due Dates & Notifications',
+  Profile: 'Profile',
+};
+
+const REVIEW_DETAIL_TABS: ReviewDetailTab[] = ['Overview', 'Devices', 'Patients', 'Contacts'];
+const DEVICE_FIELDS: MdrHeader[] = [
+  'Product Code',
+  'Brand Name',
+  'Generic Name',
+  'Model Number',
+  'Device Lot Number',
+  'Catalog Number',
+  'Serial Number',
+  'PMA 510K Number',
+  'UDI Number',
+  'UDI DI',
+  'UDI Lot Number',
+  'UDI Serial Number',
+  'Device Component Code',
+];
+const PATIENT_FIELDS: MdrHeader[] = [
+  'Patient Age (Days)',
+  'Patient Date of Birth',
+  'Patient Sex',
+  'Patient Weight (KG)',
+  'Patient Ethnicity',
+  'Patient Race',
+  'Date Implanted',
+  'Date Explanted',
+  'Medical History',
+];
+const CONTACT_FIELDS: MdrHeader[] = [
+  'Manufacturer Name',
+  'User Facility',
+  'Reporter City',
+  'Reporter State',
+  'Reporter Country',
+  'Type of Reporter',
+  'Report Source',
 ];
 
 const PRESENTATION_SLIDES = [
   {
-    id: 'current-state',
+    id: 'motivation',
     eyebrow: 'Slide 1',
-    title: 'Why the current MDR review model feels reactive',
+    title: 'Why redesign the MDR review environment',
     bullets: [
-      'Review work is fragmented across DMP, Excel exports, macros, email, and separate follow-up tracking.',
-      'Routine surveillance happens in batches and reminders, rather than as a continuously updating picture.',
-      'Search, analytics, issue monitoring, and AI-letter follow-up require repeated manual setup.',
-      'Important context is hard to share across reviewers, teams, and time.',
+      'Today’s process is fragmented across DMP, Excel exports, macros, reminders, and separate follow-up tracking.',
+      'Reviewers spend too much time rebuilding searches, datasets, and analyses instead of starting from current surveillance context.',
+      'The goal is to move from reactive queue management to continuous, visible postmarket surveillance.',
     ],
   },
   {
-    id: 'surveillance-model',
+    id: 'routine-review',
     eyebrow: 'Slide 2',
-    title: 'The future model starts with continuous surveillance',
+    title: 'Routine review becomes a structured surveillance workflow',
     bullets: [
-      'Treat MDR review more like intelligence or public health surveillance than a once-a-month spreadsheet exercise.',
-      'When a reviewer logs in, they should start from an updated picture of signals, trends, due work, and monitored issues.',
-      'The system should surface what matters first, then let the reviewer drill down into the supporting MDRs.',
-      'The goal is to move from reactive backlog management to continuous situational awareness.',
+      'Routine MDRs can be read, filtered, grouped, and exported directly in the browser.',
+      'Selected routine MDRs can move straight into analytics or issue-based review without rebuilding the set elsewhere.',
+      'The system keeps review work tied to due dates, issue monitoring, and documentation in one place.',
     ],
   },
   {
-    id: 'workspace',
+    id: 'high-priority-review',
     eyebrow: 'Slide 3',
-    title: 'A web-native reviewer workspace',
+    title: 'High-priority review supports both individual and batch workflows',
     bullets: [
-      'Dashboards, queue review, analytics, and documentation should all live in the web platform.',
-      'Reviewers should be able to read, filter, group, and export MDRs without leaving the system.',
-      'Analytics should run on the platform backend, not on local Excel workbooks.',
-      'The design should preserve compatibility with current exports while reducing dependence on macros over time.',
+      'Reviewers can open the full current high-priority set for MDR-by-MDR review with report-level comments.',
+      'Eligible subsets can move into batch review for recall-related or tightly related high-priority reports.',
+      'Device, patient, contact, and narrative details stay readable in the same review workflow.',
     ],
   },
   {
-    id: 'search-and-monitoring',
+    id: 'search-issues-ai',
     eyebrow: 'Slide 4',
-    title: 'Search, issue tracking, and communication become first-class tools',
+    title: 'Search, issue tracking, and AI letters become first-class tools',
     bullets: [
-      'Search should be broader, reusable, and easier to monitor over time.',
-      'Natural-language and semantic search should help reviewers work across messy narratives and inconsistent naming.',
-      'Issue tracking should support longitudinal monitoring, alerts, and linked evidence without rebuilding the same searches.',
-      'AI letters and responses should be tracked inside the same review lifecycle, not in parallel side systems.',
+      'Search supports broad field-based querying plus semantic and natural-language entry points.',
+      'Issue tracker keeps longitudinal monitoring, linked MDR evidence, and signals visible after review closure.',
+      'AI letters and responses stay attached to the same evidence stream instead of being tracked separately.',
     ],
   },
   {
-    id: 'outcome',
+    id: 'program-impact',
     eyebrow: 'Slide 5',
     title: 'What this enables for the review program',
     bullets: [
-      'More consistent surveillance across reviewers and teams.',
-      'Better visibility of due work, open issues, and ongoing firm communications.',
-      'Faster signal detection with less manual data handling.',
-      'A clearer, more modern reviewer experience that supports collaboration and continuity.',
+      'More visible reviewer workload for both analysts and managers.',
+      'More consistent signal detection and follow-up across reviewers and teams.',
+      'A clearer, more modern review system that still preserves compatibility with current exports during transition.',
     ],
   },
 ] as const;
@@ -152,6 +202,13 @@ type DocumentationEntry = {
   recordIds: string[];
   linkedLetterIds?: string[];
 };
+type NotificationArea = 'Routine reviews' | 'High-priority reviews' | 'AI letters' | 'Issue tracker';
+type NotificationRule = {
+  id: string;
+  area: NotificationArea;
+  type: string;
+  leadDays: number;
+};
 const STOP_WORDS = new Set([
   'show',
   'find',
@@ -173,6 +230,13 @@ const STOP_WORDS = new Set([
   'current',
   'queue',
 ]);
+const HIGH_PRIORITY_BATCH_ELIGIBLE_CODES = ['BZD', 'QNX', 'TMV'];
+const NOTIFICATION_OPTIONS: Record<NotificationArea, string[]> = {
+  'Routine reviews': ['Coming due', 'Overdue', 'New routine review item created'],
+  'High-priority reviews': ['Coming due', 'Overdue', 'New high-priority report received'],
+  'AI letters': ['Response coming due', 'Response overdue', 'New AIR received'],
+  'Issue tracker': ['Potential uptick', 'Potential signal', 'New linked MDRs'],
+};
 
 function parseDate(value: string) {
   if (!value) {
@@ -267,6 +331,17 @@ function sortByDueDate(records: MdrRecord[]) {
   return [...records].sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime());
 }
 
+function compareByDueDate(a: MdrRecord, b: MdrRecord) {
+  return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime();
+}
+
+function isDueWithin(dueDate: string, days: number) {
+  const now = new Date('2026-04-07T09:00:00-04:00').getTime();
+  const due = new Date(`${dueDate}T23:59:59`).getTime();
+  const diffDays = (due - now) / (1000 * 60 * 60 * 24);
+  return diffDays >= 0 && diffDays <= days;
+}
+
 function sumEvents(records: MdrRecord[]) {
   return records.reduce((total, record) => total + Number.parseInt(getField(record, 'Number of Events') || '1', 10), 0);
 }
@@ -317,6 +392,8 @@ function highlightText(text: string, highlightTerms: string) {
 export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('Overview');
   const [presentationSlideIndex, setPresentationSlideIndex] = useState(0);
+  const [showPresentationModal, setShowPresentationModal] = useState(false);
+  const [showManagerView, setShowManagerView] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState(issueItems[0].id);
   const [selectedAiLetterId, setSelectedAiLetterId] = useState(aiLetters[0].id);
   const [selectedDocumentationEntryId, setSelectedDocumentationEntryId] = useState('DOC-RR-2026-03');
@@ -375,11 +452,15 @@ export default function App() {
   const [customEndDate, setCustomEndDate] = useState('2026-03-26');
   const [dashboardPinnedIds, setDashboardPinnedIds] = useState<string[] | null>(null);
   const [dashboardPinnedLabel, setDashboardPinnedLabel] = useState('');
-  const [documentationMode, setDocumentationMode] = useState<'default' | 'highPriorityReview'>('default');
+  const [documentationMode, setDocumentationMode] = useState<'default' | 'highPriorityIndividual' | 'highPriorityBatch'>('default');
   const [documentationRecordIds, setDocumentationRecordIds] = useState<string[]>([]);
   const [documentationExpanded, setDocumentationExpanded] = useState(true);
   const [documentationComments, setDocumentationComments] = useState<Record<string, string>>({});
   const [documentationHighlightTerms, setDocumentationHighlightTerms] = useState('');
+  const [documentationBatchSelectedIds, setDocumentationBatchSelectedIds] = useState<string[]>([]);
+  const [documentationBatchComment, setDocumentationBatchComment] = useState('');
+  const [documentationDetailTabs, setDocumentationDetailTabs] = useState<Record<string, ReviewDetailTab>>({});
+  const [showBatchCommentModal, setShowBatchCommentModal] = useState(false);
   const [issueVisibleColumns, setIssueVisibleColumns] = useState<MdrHeader[]>(DEFAULT_COLUMNS);
   const [issueExpanded, setIssueExpanded] = useState(true);
   const [issueShowAllColumns, setIssueShowAllColumns] = useState(false);
@@ -387,6 +468,15 @@ export default function App() {
   const [productCodeSearch, setProductCodeSearch] = useState('');
   const [selectedProductCode, setSelectedProductCode] = useState('BZD');
   const [assignmentTarget, setAssignmentTarget] = useState(reviewerProfile.name);
+  const [notificationArea, setNotificationArea] = useState<NotificationArea>('Routine reviews');
+  const [notificationType, setNotificationType] = useState('Coming due');
+  const [notificationLeadDays, setNotificationLeadDays] = useState('7');
+  const [activeNotifications, setActiveNotifications] = useState<NotificationRule[]>([
+    { id: 'NTF-001', area: 'Routine reviews', type: 'Coming due', leadDays: 14 },
+    { id: 'NTF-002', area: 'High-priority reviews', type: 'Coming due', leadDays: 2 },
+    { id: 'NTF-003', area: 'AI letters', type: 'Response coming due', leadDays: 7 },
+    { id: 'NTF-004', area: 'Issue tracker', type: 'Potential uptick', leadDays: 0 },
+  ]);
   const [productCodeOwners, setProductCodeOwners] = useState<Record<string, string>>({
     BZD: reviewerProfile.name,
     QNX: reviewerProfile.name,
@@ -440,6 +530,10 @@ export default function App() {
       }
       return recordMatchesQuery(record, deferredHpSearch, 'All Fields', true);
     }),
+  );
+  const batchEligibleHighPriorityRecords = filteredHighPriorityQueue.filter(
+    (record) =>
+      HIGH_PRIORITY_BATCH_ELIGIBLE_CODES.includes(shortCode(getField(record, 'Product Code'))) || isRecallRelatedRecord(record),
   );
 
   const searchManufacturers = ['All manufacturers', ...new Set(mdrRecords.map((record) => getField(record, 'Manufacturer Name')))];
@@ -578,6 +672,17 @@ export default function App() {
   );
   const pinnedDashboardRecords = dashboardPinnedIds ? mdrRecords.filter((record) => dashboardPinnedIds.includes(record.id)) : null;
   const documentationRecords = sortByDueDate(mdrRecords.filter((record) => documentationRecordIds.includes(record.id)));
+  const earliestRoutineDueRecord = [...routineRecords].sort(compareByDueDate)[0];
+  const earliestHighPriorityDueRecord = [...highPriorityRecords].sort(compareByDueDate)[0];
+  const routineDueNext30 = routineRecords.filter((record) => isDueWithin(record.dueDate, 30)).length;
+  const highPriorityDueNext7 = highPriorityRecords.filter((record) => isDueWithin(record.dueDate, 7)).length;
+  const managerReviewers = [
+    { name: 'John Smith', team: 'Medical Device Team', productCodes: assignedProductCodes, totalWorkload: 1504, routineDue30: 186, highPriorityDue7: 11 },
+    { name: 'Emily Carter', team: 'Cardiovascular Team C', productCodes: ['RSP', 'VNT', 'HMD'], totalWorkload: 1188, routineDue30: 144, highPriorityDue7: 8 },
+    { name: 'Michael Chen', team: 'Cardiovascular Team D', productCodes: ['TMV', 'LPR', 'NIV'], totalWorkload: 1326, routineDue30: 171, highPriorityDue7: 13 },
+    { name: 'Sara Patel', team: 'Respiratory Devices Team', productCodes: ['QNX', 'BZD', 'RSP'], totalWorkload: 1412, routineDue30: 162, highPriorityDue7: 9 },
+    { name: 'David Romero', team: 'Postmarket Signal Team', productCodes: ['HMD', 'VNT', 'TMV'], totalWorkload: 1244, routineDue30: 138, highPriorityDue7: 7 },
+  ];
 
   const dashboardWindowConfig = DASHBOARD_WINDOWS.find((window) => window.id === dashboardMode) ?? DASHBOARD_WINDOWS[1];
   const dashboardScopeRecords =
@@ -727,15 +832,20 @@ export default function App() {
       <header className="topbar">
         <div>
           <h1>MDR Review Prototype</h1>
-          <button
-            className="header-link-button"
-            onClick={() => {
-              setPresentationSlideIndex(0);
-              setActiveTab('Presentation');
-            }}
-          >
-            Presentation
-          </button>
+          <div className="header-link-row">
+            <button
+              className="header-link-button"
+              onClick={() => {
+                setPresentationSlideIndex(0);
+                setShowPresentationModal(true);
+              }}
+            >
+              Presentation
+            </button>
+            <button className="header-link-button" onClick={() => setShowManagerView(true)}>
+              Manager&apos;s view
+            </button>
+          </div>
         </div>
         <button className="reviewer-badge" onClick={() => setActiveTab('Profile')}>
           <span>{reviewerProfile.name}</span>
@@ -751,7 +861,7 @@ export default function App() {
             className={tab === activeTab ? 'tab active' : 'tab'}
             onClick={() => startTransition(() => setActiveTab(tab))}
           >
-            {tab}
+            {TAB_LABELS[tab]}
           </button>
         ))}
       </nav>
@@ -807,81 +917,6 @@ export default function App() {
                 rows={aiStatusMix}
                 chartStyle="bars"
               />
-            </section>
-          </section>
-        )}
-
-        {activeTab === 'Presentation' && (
-          <section className="panel-stack">
-            <section className="presentation-toolbar">
-              <div>
-                <p className="eyebrow">Presentation</p>
-                <h2>MDR Review Prototype: high-level concept walkthrough</h2>
-                <p className="subdued">A short 5-minute discussion version for team and policy conversations.</p>
-              </div>
-              <div className="pill-row wrap">
-                <button
-                  className="pill"
-                  onClick={() => setPresentationSlideIndex((current) => Math.max(current - 1, 0))}
-                  disabled={presentationSlideIndex === 0}
-                >
-                  Previous
-                </button>
-                <button
-                  className="pill"
-                  onClick={() =>
-                    setPresentationSlideIndex((current) => Math.min(current + 1, PRESENTATION_SLIDES.length - 1))
-                  }
-                  disabled={presentationSlideIndex === PRESENTATION_SLIDES.length - 1}
-                >
-                  Next
-                </button>
-              </div>
-            </section>
-
-            <article className="presentation-slide card">
-              <div className="presentation-slide-header">
-                <div>
-                  <p className="eyebrow">{PRESENTATION_SLIDES[presentationSlideIndex].eyebrow}</p>
-                  <h2>{PRESENTATION_SLIDES[presentationSlideIndex].title}</h2>
-                </div>
-                <span className="presentation-counter">
-                  {presentationSlideIndex + 1} / {PRESENTATION_SLIDES.length}
-                </span>
-              </div>
-
-              <div className="presentation-slide-body">
-                <div className="presentation-bullets">
-                  {PRESENTATION_SLIDES[presentationSlideIndex].bullets.map((bullet) => (
-                    <div key={bullet} className="presentation-bullet">
-                      <span className="presentation-bullet-dot" />
-                      <p>{bullet}</p>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="presentation-accent-panel">
-                  <p className="eyebrow">Key message</p>
-                  <h3>
-                    {presentationSlideIndex === 0 && 'The current process works, but it depends too much on manual reconstruction.'}
-                    {presentationSlideIndex === 1 && 'Start from live surveillance context, not from raw exports.'}
-                    {presentationSlideIndex === 2 && 'Make the browser the primary review environment.'}
-                    {presentationSlideIndex === 3 && 'Search, issues, and communication should stay connected to the same evidence stream.'}
-                    {presentationSlideIndex === 4 && 'The outcome is a more visible, consistent, and scalable review program.'}
-                  </h3>
-                </div>
-              </div>
-            </article>
-
-            <section className="presentation-progress">
-              {PRESENTATION_SLIDES.map((slide, index) => (
-                <button
-                  key={slide.id}
-                  className={index === presentationSlideIndex ? 'presentation-dot active' : 'presentation-dot'}
-                  onClick={() => setPresentationSlideIndex(index)}
-                  aria-label={`Go to ${slide.eyebrow}`}
-                />
-              ))}
             </section>
           </section>
         )}
@@ -1209,8 +1244,8 @@ export default function App() {
 
         {activeTab === 'Routine Queue' && (
           <QueueView
-            title="Routine queue"
-            eyebrow="Routine queue"
+            title="Routine review"
+            eyebrow="Routine review"
             description="Routine MDRs grouped for aggregate review. Use the table for readable bulk review and export-compatible subsets."
             records={filteredRoutineQueue}
             searchValue={routineSearch}
@@ -1242,31 +1277,40 @@ export default function App() {
                 current.length === filteredRoutineQueue.length ? [] : filteredRoutineQueue.map((record) => record.id),
               )
             }
-            onBatchAction={(action, count) =>
-              setActionMessage(
-                action === 'issue'
-                  ? `${count} routine MDRs added to a draft issue-based review.`
-                  : `${count} routine MDRs flagged for follow-up.`,
-              )
-            }
-            primaryActionLabel="Conduct routine review"
+            actions={[
+              {
+                label: 'Conduct routine review',
+                disabled: routineSelectedIds.length === 0,
+                onClick: () => {
+                  setDashboardPinnedIds(routineSelectedIds);
+                  setDashboardPinnedLabel(`${routineSelectedIds.length} selected routine MDRs`);
+                  setDashboardScope('Routine queue');
+                  setActiveTab('Dashboard');
+                },
+              },
+              {
+                label: 'Add selected to issue review',
+                disabled: routineSelectedIds.length === 0,
+                onClick: () => setActionMessage(`${routineSelectedIds.length} routine MDRs added to a draft issue-based review.`),
+              },
+              {
+                label: 'Flag selected',
+                disabled: routineSelectedIds.length === 0,
+                onClick: () => setActionMessage(`${routineSelectedIds.length} routine MDRs flagged for follow-up.`),
+              },
+            ]}
             highlightTerms={routineHighlightTerms}
             onHighlightTermsChange={setRoutineHighlightTerms}
-            onPrimaryAction={() => {
-              setDashboardPinnedIds(routineSelectedIds);
-              setDashboardPinnedLabel(`${routineSelectedIds.length} selected routine MDRs`);
-              setDashboardScope('Routine queue');
-              setActiveTab('Dashboard');
-            }}
+            exportButtonLabel="Export current queue"
             exportName="routine-queue-export.csv"
           />
         )}
 
         {activeTab === 'High Priority Queue' && (
           <QueueView
-            title="High priority queue"
-            eyebrow="High priority queue"
-            description="High-priority MDRs remain individually reviewable, but this view keeps batch visibility for death, thermal, and suicide-ideation categories."
+            title="High-priority review"
+            eyebrow=""
+            description=""
             records={filteredHighPriorityQueue}
             searchValue={hpSearch}
             onSearchChange={setHpSearch}
@@ -1297,22 +1341,51 @@ export default function App() {
                 current.length === filteredHighPriorityQueue.length ? [] : filteredHighPriorityQueue.map((record) => record.id),
               )
             }
-            onBatchAction={(action, count) =>
-              setActionMessage(
-                action === 'issue'
-                  ? `${count} high-priority MDRs added to a draft issue-based review.`
-                  : `${count} high-priority MDRs flagged for follow-up.`,
-              )
-            }
-            primaryActionLabel="Review selected high-priority reports"
+            actions={[
+              {
+                label: 'Review individually',
+                disabled: filteredHighPriorityQueue.length === 0,
+                onClick: () => {
+                  setDocumentationMode('highPriorityIndividual');
+                  setDocumentationRecordIds(filteredHighPriorityQueue.map((record) => record.id));
+                  setDocumentationBatchSelectedIds([]);
+                  setDocumentationBatchComment('');
+                  setDocumentationExpanded(true);
+                  setDocumentationHighlightTerms('');
+                  setDocumentationDetailTabs({});
+                  setShowBatchCommentModal(false);
+                  setActiveTab('Documentation');
+                },
+              },
+              {
+                label: 'Batch review',
+                disabled: batchEligibleHighPriorityRecords.length === 0,
+                onClick: () => {
+                  setDocumentationMode('highPriorityBatch');
+                  setDocumentationRecordIds(batchEligibleHighPriorityRecords.map((record) => record.id));
+                  setDocumentationBatchSelectedIds([]);
+                  setDocumentationBatchComment('');
+                  setDocumentationExpanded(true);
+                  setDocumentationHighlightTerms('');
+                  setDocumentationDetailTabs({});
+                  setShowBatchCommentModal(false);
+                  setActiveTab('Documentation');
+                },
+              },
+              {
+                label: 'Add selected to issue review',
+                disabled: hpSelectedIds.length === 0,
+                onClick: () => setActionMessage(`${hpSelectedIds.length} high-priority MDRs added to a draft issue-based review.`),
+              },
+              {
+                label: 'Flag selected',
+                disabled: hpSelectedIds.length === 0,
+                onClick: () => setActionMessage(`${hpSelectedIds.length} high-priority MDRs flagged for follow-up.`),
+              },
+            ]}
             highlightTerms={hpHighlightTerms}
             onHighlightTermsChange={setHpHighlightTerms}
-            onPrimaryAction={() => {
-              setDocumentationMode('highPriorityReview');
-              setDocumentationRecordIds(hpSelectedIds);
-              setDocumentationExpanded(true);
-              setActiveTab('Documentation');
-            }}
+            exportButtonLabel="Export current queue"
             exportName="high-priority-queue-export.csv"
           />
         )}
@@ -1823,6 +1896,142 @@ export default function App() {
           </section>
         )}
 
+        {activeTab === 'Due Dates & Notifications' && (
+          <section className="panel-stack">
+            <section className="section-header">
+              <div>
+                <p className="eyebrow">Due dates and notifications</p>
+                <h2>Upcoming due work and reviewer alerts</h2>
+              </div>
+            </section>
+
+            <section className="metrics-grid compact">
+              <article className="metric-card due-date-feature-card">
+                <p>Earliest routine due date</p>
+                <strong>{earliestRoutineDueRecord?.dueDate ?? '—'}</strong>
+                <span>
+                  {earliestRoutineDueRecord
+                    ? `${getField(earliestRoutineDueRecord, 'Report Number')} · ${shortCode(getField(earliestRoutineDueRecord, 'Product Code'))}`
+                    : 'No routine review items in view'}
+                </span>
+                <button className="text-button" onClick={() => setActiveTab('Routine Queue')}>
+                  Open routine review by due date
+                </button>
+              </article>
+              <article className="metric-card due-date-feature-card">
+                <p>Earliest high-priority due date</p>
+                <strong>{earliestHighPriorityDueRecord?.dueDate ?? '—'}</strong>
+                <span>
+                  {earliestHighPriorityDueRecord
+                    ? `${getField(earliestHighPriorityDueRecord, 'Report Number')} · ${getField(earliestHighPriorityDueRecord, 'Code Blue Type')}`
+                    : 'No high-priority review items in view'}
+                </span>
+                <button className="text-button" onClick={() => setActiveTab('High Priority Queue')}>
+                  Open high-priority review by due date
+                </button>
+              </article>
+              <MetricCard label="Routine due next 30 days" value={routineDueNext30.toLocaleString()} note="Upcoming routine review workload" />
+              <MetricCard label="High priority due next 7 days" value={highPriorityDueNext7.toLocaleString()} note="Upcoming urgent review workload" />
+            </section>
+
+            <section className="dashboard-grid">
+              <article className="card">
+                <div className="card-header">
+                  <div>
+                    <p className="eyebrow">Set notifications</p>
+                    <h3>Create reviewer notification rules</h3>
+                  </div>
+                </div>
+                <div className="profile-reassign-grid notification-grid">
+                  <label>
+                    <span>Area</span>
+                    <select
+                      value={notificationArea}
+                      onChange={(event) => {
+                        const nextArea = event.target.value as NotificationArea;
+                        setNotificationArea(nextArea);
+                        setNotificationType(NOTIFICATION_OPTIONS[nextArea][0]);
+                      }}
+                    >
+                      {Object.keys(NOTIFICATION_OPTIONS).map((area) => (
+                        <option key={area} value={area}>
+                          {area}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Notification type</span>
+                    <select value={notificationType} onChange={(event) => setNotificationType(event.target.value)}>
+                      {NOTIFICATION_OPTIONS[notificationArea].map((option) => (
+                        <option key={option} value={option}>
+                          {option}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    <span>Days before</span>
+                    <select value={notificationLeadDays} onChange={(event) => setNotificationLeadDays(event.target.value)}>
+                      {['0', '1', '2', '3', '7', '14', '30'].map((value) => (
+                        <option key={value} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <button
+                    className="primary-button"
+                    onClick={() => {
+                      const nextRule: NotificationRule = {
+                        id: `NTF-${Date.now()}`,
+                        area: notificationArea,
+                        type: notificationType,
+                        leadDays: Number(notificationLeadDays),
+                      };
+                      setActiveNotifications((current) => [nextRule, ...current]);
+                      setActionMessage(`${notificationArea} notification saved: ${notificationType}.`);
+                    }}
+                  >
+                    Add notification
+                  </button>
+                </div>
+              </article>
+
+              <article className="card">
+                <div className="card-header">
+                  <div>
+                    <p className="eyebrow">Active notifications</p>
+                    <h3>Current reviewer alert rules</h3>
+                  </div>
+                </div>
+                <div className="stacked-list">
+                  {activeNotifications.map((rule) => (
+                    <div key={rule.id} className="list-row">
+                      <div>
+                        <strong>{rule.area}</strong>
+                        <p className="subdued">{rule.type}</p>
+                      </div>
+                      <div className="notification-rule-actions">
+                        <span>{rule.leadDays} days before</span>
+                        <button
+                          className="text-button"
+                          onClick={() => {
+                            setActiveNotifications((current) => current.filter((item) => item.id !== rule.id));
+                            setActionMessage(`Deleted notification: ${rule.type}.`);
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </article>
+            </section>
+          </section>
+        )}
+
         {activeTab === 'AI Letters' && (
           <section className="panel-stack">
             <section className="section-header">
@@ -1968,42 +2177,26 @@ export default function App() {
 
         {activeTab === 'Documentation' && (
           <section className="panel-stack">
-            {documentationMode === 'highPriorityReview' && documentationRecords.length > 0 ? (
+            {documentationMode !== 'default' && documentationRecords.length > 0 ? (
               <>
                 <section className="section-header">
                   <div>
                     <p className="eyebrow">Documentation</p>
-                    <h2>High-priority review item</h2>
-                    <p className="subdued">
-                      Review selected high-priority reports, expand or collapse the report details, enter comments for each MDR,
-                      and save the review item from one screen.
-                    </p>
-                  </div>
-                  <div className="pill-row wrap">
-                    <button className={documentationExpanded ? 'pill active' : 'pill'} onClick={() => setDocumentationExpanded((current) => !current)}>
-                      {documentationExpanded ? 'Collapse reports' : 'Expand reports'}
-                    </button>
-                    <label className="highlight-terms-field">
-                      <span>Highlight terms</span>
-                      <input
-                        value={documentationHighlightTerms}
-                        onChange={(event) => setDocumentationHighlightTerms(event.target.value)}
-                        placeholder="thermal, death, shunt"
-                      />
-                    </label>
-                    <button
-                      className="primary-button"
-                      onClick={() =>
-                        setActionMessage(`Saved high-priority review for ${documentationRecords.length} selected MDRs.`)
-                      }
-                    >
-                      Save review
-                    </button>
+                    <h2>{documentationMode === 'highPriorityIndividual' ? 'High-priority individual review' : 'High-priority batch review'}</h2>
+                    {documentationMode === 'highPriorityBatch' && (
+                      <p className="subdued">
+                        Eligible product codes: {HIGH_PRIORITY_BATCH_ELIGIBLE_CODES.join(', ')} · Eligible report type: Recall
+                      </p>
+                    )}
                   </div>
                 </section>
 
                 <section className="metrics-grid compact">
-                  <MetricCard label="Selected HP MDRs" value={String(documentationRecords.length)} note="Current high-priority review item" />
+                  <MetricCard
+                    label={documentationMode === 'highPriorityIndividual' ? 'MDRs in review' : 'Eligible HP MDRs'}
+                    value={String(documentationRecords.length)}
+                    note="Current high-priority review item"
+                  />
                   <MetricCard
                     label="Deaths in review"
                     value={String(documentationRecords.filter((record) => getField(record, 'Code Blue Type') === 'Death').length)}
@@ -2012,9 +2205,73 @@ export default function App() {
                   <MetricCard
                     label="Open comments"
                     value={String(documentationRecords.filter((record) => documentationComments[record.id]?.trim()).length)}
-                    note="Saved locally in the prototype session"
+                    note={documentationMode === 'highPriorityIndividual' ? 'Per-report comments entered' : 'Reports with batch comments applied'}
                   />
                 </section>
+
+                <article className="card">
+                  <div className="card-header">
+                    <div>
+                      <p className="eyebrow">Actions</p>
+                      <h3>{documentationMode === 'highPriorityIndividual' ? 'Review controls' : 'Batch review controls'}</h3>
+                    </div>
+                  </div>
+                  <div className="queue-action-controls">
+                    <label className="highlight-terms-field">
+                      <span>Highlight terms</span>
+                      <input
+                        value={documentationHighlightTerms}
+                        onChange={(event) => setDocumentationHighlightTerms(event.target.value)}
+                        placeholder="thermal, death, shunt"
+                      />
+                    </label>
+                    <div className="pill-row wrap">
+                      <button
+                        className={documentationExpanded ? 'pill active' : 'pill'}
+                        onClick={() => setDocumentationExpanded((current) => !current)}
+                      >
+                        {documentationExpanded ? 'Collapse reports' : 'Expand reports'}
+                      </button>
+                      {documentationMode === 'highPriorityBatch' ? (
+                        <>
+                          <button
+                            className="pill"
+                            onClick={() => setDocumentationBatchSelectedIds(documentationRecords.map((record) => record.id))}
+                          >
+                            Select all
+                          </button>
+                          <button className="pill" onClick={() => setDocumentationBatchSelectedIds([])}>
+                            Clear batch set
+                          </button>
+                          <button
+                            className="primary-button"
+                            disabled={documentationBatchSelectedIds.length === 0}
+                            onClick={() => setShowBatchCommentModal(true)}
+                          >
+                            Conduct batch review
+                          </button>
+                          <button
+                            className="primary-button"
+                            onClick={() =>
+                              setActionMessage(`Saved batch review for ${documentationBatchSelectedIds.length} selected high-priority MDRs.`)
+                            }
+                          >
+                            Save batch review
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="primary-button"
+                          onClick={() =>
+                            setActionMessage(`Saved high-priority individual review for ${documentationRecords.length} MDRs.`)
+                          }
+                        >
+                          Save review
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </article>
 
                 <section className="documentation-review-list">
                   {documentationRecords.map((record) => (
@@ -2027,7 +2284,23 @@ export default function App() {
                             {getField(record, 'Manufacturer Name')} · {getField(record, 'Brand Name')} · Due {record.dueDate}
                           </p>
                         </div>
-                        <span className="badge danger">{record.reviewStatus}</span>
+                        <div className="documentation-card-actions">
+                          {documentationMode === 'highPriorityBatch' && (
+                            <label className="documentation-select">
+                              <input
+                                type="checkbox"
+                                checked={documentationBatchSelectedIds.includes(record.id)}
+                                onChange={() =>
+                                  setDocumentationBatchSelectedIds((current) =>
+                                    current.includes(record.id) ? current.filter((item) => item !== record.id) : [...current, record.id],
+                                  )
+                                }
+                              />
+                              <span>Select for batch</span>
+                            </label>
+                          )}
+                          <span className="badge danger">{record.reviewStatus}</span>
+                        </div>
                       </div>
 
                       <div className="stacked-list">
@@ -2045,38 +2318,57 @@ export default function App() {
                         </div>
                       </div>
 
+                      <div className="pill-row wrap review-detail-tab-row">
+                        {REVIEW_DETAIL_TABS.map((tab) => {
+                          const selectedTab = documentationDetailTabs[record.id] ?? 'Overview';
+                          return (
+                            <button
+                              key={`${record.id}-${tab}`}
+                              className={selectedTab === tab ? 'pill active' : 'pill'}
+                              onClick={() => setDocumentationDetailTabs((current) => ({ ...current, [record.id]: tab }))}
+                            >
+                              {tab}
+                            </button>
+                          );
+                        })}
+                      </div>
+
                       {documentationExpanded && (
-                        <div className="expanded-grid">
-                          <div className="details-panel">
-                            <p>
-                              <strong>Event description:</strong> {highlightText(getField(record, 'Event Description'), documentationHighlightTerms)}
-                            </p>
-                            <p>
-                              <strong>Manufacturer narrative:</strong> {highlightText(getField(record, 'Manufacturer Narrative'), documentationHighlightTerms)}
-                            </p>
-                          </div>
-                          <div className="details-panel">
-                            <p>
-                              <strong>MedSun narrative:</strong> {highlightText(getField(record, 'MedSun Narrative'), documentationHighlightTerms)}
-                            </p>
-                            <p>
-                              <strong>Medical history:</strong> {highlightText(getField(record, 'Medical History'), documentationHighlightTerms)}
-                            </p>
-                          </div>
+                        <div className="expanded-grid review-tab-grid">
+                          {getReviewTabPanels(record, documentationDetailTabs[record.id] ?? 'Overview', documentationHighlightTerms).map(
+                            (panel, index) => (
+                              <div key={`${record.id}-panel-${index}`} className="details-panel">
+                                {panel.map(([label, value]) => (
+                                  <p key={`${record.id}-${label}`}>
+                                    <strong>{label}:</strong> {value}
+                                  </p>
+                                ))}
+                              </div>
+                            ),
+                          )}
                         </div>
                       )}
 
-                      <label className="documentation-comment">
-                        <span>Reviewer comments</span>
-                        <textarea
-                          value={documentationComments[record.id] ?? ''}
-                          onChange={(event) =>
-                            setDocumentationComments((current) => ({ ...current, [record.id]: event.target.value }))
-                          }
-                          placeholder="Enter high-priority review comments, disposition, and any follow-up rationale."
-                          rows={5}
-                        />
-                      </label>
+                      {documentationMode === 'highPriorityIndividual' ? (
+                        <label className="documentation-comment">
+                          <span>Reviewer comments</span>
+                          <textarea
+                            value={documentationComments[record.id] ?? ''}
+                            onChange={(event) =>
+                              setDocumentationComments((current) => ({ ...current, [record.id]: event.target.value }))
+                            }
+                            placeholder="Enter high-priority review comments, disposition, and any follow-up rationale."
+                            rows={5}
+                          />
+                        </label>
+                      ) : (
+                        <div className="details-panel batch-application-note">
+                          <p>
+                            <strong>Applied batch comment:</strong>{' '}
+                            {documentationComments[record.id] || 'No shared batch comment has been applied to this report yet.'}
+                          </p>
+                        </div>
+                      )}
                     </article>
                   ))}
                 </section>
@@ -2267,6 +2559,163 @@ export default function App() {
           {actionMessage}
         </div>
       )}
+      {showPresentationModal && (
+        <div className="modal-backdrop" onClick={() => setShowPresentationModal(false)}>
+          <div className="modal-card presentation-modal-card" onClick={(event) => event.stopPropagation()}>
+            <section className="presentation-toolbar">
+              <div>
+                <p className="eyebrow">Presentation</p>
+                <h2>MDR Review Prototype</h2>
+                <p className="subdued">Short, high-level walkthrough for team discussion.</p>
+              </div>
+              <div className="pill-row wrap">
+                <button
+                  className="pill"
+                  onClick={() => setPresentationSlideIndex((current) => Math.max(current - 1, 0))}
+                  disabled={presentationSlideIndex === 0}
+                >
+                  Previous
+                </button>
+                <button
+                  className="pill"
+                  onClick={() => setPresentationSlideIndex((current) => Math.min(current + 1, PRESENTATION_SLIDES.length - 1))}
+                  disabled={presentationSlideIndex === PRESENTATION_SLIDES.length - 1}
+                >
+                  Next
+                </button>
+                <button className="pill" onClick={() => setShowPresentationModal(false)}>
+                  Close
+                </button>
+              </div>
+            </section>
+
+            <article className="presentation-slide card">
+              <div className="presentation-slide-header">
+                <div>
+                  <p className="eyebrow">{PRESENTATION_SLIDES[presentationSlideIndex].eyebrow}</p>
+                  <h2>{PRESENTATION_SLIDES[presentationSlideIndex].title}</h2>
+                </div>
+                <span className="presentation-counter">
+                  {presentationSlideIndex + 1} / {PRESENTATION_SLIDES.length}
+                </span>
+              </div>
+
+              <div className="presentation-slide-body single-column">
+                <div className="presentation-bullets">
+                  {PRESENTATION_SLIDES[presentationSlideIndex].bullets.map((bullet) => (
+                    <div key={bullet} className="presentation-bullet">
+                      <span className="presentation-bullet-dot" />
+                      <p>{bullet}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </article>
+
+            <section className="presentation-progress">
+              {PRESENTATION_SLIDES.map((slide, index) => (
+                <button
+                  key={slide.id}
+                  className={index === presentationSlideIndex ? 'presentation-dot active' : 'presentation-dot'}
+                  onClick={() => setPresentationSlideIndex(index)}
+                  aria-label={`Go to ${slide.eyebrow}`}
+                />
+              ))}
+            </section>
+          </div>
+        </div>
+      )}
+      {showManagerView && (
+        <div className="modal-backdrop" onClick={() => setShowManagerView(false)}>
+          <div className="modal-card manager-modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="card-header">
+              <div>
+                <p className="eyebrow">Manager&apos;s view</p>
+                <h2>Patricia Gomez</h2>
+                <p className="subdued">Supervisory reviewer overview across assigned portfolios.</p>
+              </div>
+              <button className="pill" onClick={() => setShowManagerView(false)}>
+                Close
+              </button>
+            </div>
+            <div className="manager-reviewer-grid">
+              {managerReviewers.map((reviewer) => (
+                <button
+                  key={reviewer.name}
+                  className="manager-reviewer-card"
+                  onClick={() => {
+                    setShowManagerView(false);
+                    setActiveTab('Overview');
+                  }}
+                >
+                  <div className="issue-card-top">
+                    <strong>{reviewer.name}</strong>
+                    <span className="badge neutral">{reviewer.team}</span>
+                  </div>
+                  <p>Product codes: {reviewer.productCodes.join(', ')}</p>
+                  <div className="manager-reviewer-stats">
+                    <div>
+                      <span>Total workload</span>
+                      <strong>{reviewer.totalWorkload}</strong>
+                    </div>
+                    <div>
+                      <span>Routine due next 30 days</span>
+                      <strong>{reviewer.routineDue30}</strong>
+                    </div>
+                    <div>
+                      <span>High priority due next 7 days</span>
+                      <strong>{reviewer.highPriorityDue7}</strong>
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+      {showBatchCommentModal && (
+        <div className="modal-backdrop" onClick={() => setShowBatchCommentModal(false)}>
+          <div className="modal-card" onClick={(event) => event.stopPropagation()}>
+            <div className="card-header">
+              <div>
+                <p className="eyebrow">Batch review</p>
+                <h3>Apply one review comment to the selected reports</h3>
+              </div>
+              <span className="badge neutral">{documentationBatchSelectedIds.length} selected</span>
+            </div>
+            <label className="documentation-comment">
+              <span>Batch review comment</span>
+              <textarea
+                value={documentationBatchComment}
+                onChange={(event) => setDocumentationBatchComment(event.target.value)}
+                placeholder="Enter one review comment to apply to the selected high-priority reports."
+                rows={6}
+              />
+            </label>
+            <div className="pill-row wrap modal-actions">
+              <button className="pill" onClick={() => setShowBatchCommentModal(false)}>
+                Cancel
+              </button>
+              <button
+                className="primary-button"
+                disabled={!documentationBatchComment.trim() || documentationBatchSelectedIds.length === 0}
+                onClick={() => {
+                  setDocumentationComments((current) =>
+                    documentationBatchSelectedIds.reduce<Record<string, string>>(
+                      (acc, id) => ({ ...acc, [id]: documentationBatchComment }),
+                      { ...current },
+                    ),
+                  );
+                  setShowBatchCommentModal(false);
+                  setActionMessage(`Applied one batch review comment to ${documentationBatchSelectedIds.length} selected high-priority MDRs.`);
+                }}
+              >
+                Apply batch review
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -2297,14 +2746,13 @@ function QueueView({
   selectedIds,
   onToggleSelected,
   onToggleSelectAll,
-  onBatchAction,
-  primaryActionLabel,
-  onPrimaryAction,
+  actions,
+  exportButtonLabel = 'Export current result set',
   exportName,
 }: {
   title: string;
   eyebrow: string;
-  description: string;
+  description?: string;
   records: MdrRecord[];
   searchValue: string;
   onSearchChange: (value: string) => void;
@@ -2327,21 +2775,20 @@ function QueueView({
   selectedIds: string[];
   onToggleSelected: (id: string) => void;
   onToggleSelectAll: () => void;
-  onBatchAction: (action: 'issue' | 'flag', count: number) => void;
-  primaryActionLabel: string;
-  onPrimaryAction: () => void;
+  actions: Array<{ label: string; disabled: boolean; onClick: () => void }>;
+  exportButtonLabel?: string;
   exportName: string;
 }) {
   return (
     <section className="panel-stack">
       <section className="section-header">
         <div>
-          <p className="eyebrow">{eyebrow}</p>
+          {eyebrow ? <p className="eyebrow">{eyebrow}</p> : null}
           <h2>{title}</h2>
-          <p className="subdued">{description}</p>
+          {description ? <p className="subdued">{description}</p> : null}
         </div>
         <button className="primary-button" onClick={() => downloadCsv(records, exportName)}>
-          Export current result set
+          {exportButtonLabel}
         </button>
       </section>
 
@@ -2383,23 +2830,7 @@ function QueueView({
         selectedIds={selectedIds}
         onToggleSelected={onToggleSelected}
         onToggleSelectAll={onToggleSelectAll}
-        actions={[
-          {
-            label: primaryActionLabel,
-            disabled: selectedIds.length === 0,
-            onClick: onPrimaryAction,
-          },
-          {
-            label: 'Add selected to issue review',
-            disabled: selectedIds.length === 0,
-            onClick: () => onBatchAction('issue', selectedIds.length),
-          },
-          {
-            label: 'Flag selected',
-            disabled: selectedIds.length === 0,
-            onClick: () => onBatchAction('flag', selectedIds.length),
-          },
-        ]}
+        actions={actions}
       />
     </section>
   );
@@ -2693,6 +3124,61 @@ function MiniBarChart({ rows }: { rows: Array<[string, number]> }) {
       ))}
     </div>
   );
+}
+
+function isRecallRelatedRecord(record: MdrRecord) {
+  return /recall|remediation|field correction/i.test(
+    `${getField(record, 'Remedial Action Type')} ${getField(record, 'Manufacturer Narrative')} ${record.tags.join(' ')}`,
+  );
+}
+
+function getReviewTabPanels(
+  record: MdrRecord,
+  tab: ReviewDetailTab,
+  highlightTerms: string,
+): Array<Array<[string, ReturnType<typeof highlightText>]>> {
+  if (tab === 'Devices') {
+    return splitIntoColumns(
+      DEVICE_FIELDS.map((field) => [field, highlightText(getField(record, field) || '—', highlightTerms)]),
+      2,
+    );
+  }
+
+  if (tab === 'Patients') {
+    return splitIntoColumns(
+      PATIENT_FIELDS.map((field) => [field, highlightText(getField(record, field) || '—', highlightTerms)]),
+      2,
+    );
+  }
+
+  if (tab === 'Contacts') {
+    return splitIntoColumns(
+      CONTACT_FIELDS.map((field) => [field, highlightText(getField(record, field) || '—', highlightTerms)]),
+      2,
+    );
+  }
+
+  return [
+    [
+      ['Event description', highlightText(getField(record, 'Event Description') || '—', highlightTerms)],
+      ['Manufacturer narrative', highlightText(getField(record, 'Manufacturer Narrative') || '—', highlightTerms)],
+      ['MedSun narrative', highlightText(getField(record, 'MedSun Narrative') || '—', highlightTerms)],
+    ],
+    [
+      ['Medical history', highlightText(getField(record, 'Medical History') || '—', highlightTerms)],
+      ['Event type', highlightText(getField(record, 'Event Type') || '—', highlightTerms)],
+      ['Code blue type', highlightText(getField(record, 'Code Blue Type') || '—', highlightTerms)],
+      ['FDA received date', highlightText(getField(record, 'FDA Received Date') || '—', highlightTerms)],
+    ],
+  ];
+}
+
+function splitIntoColumns<T>(items: T[], columnCount: number): T[][] {
+  const columns = Array.from({ length: columnCount }, () => [] as T[]);
+  items.forEach((item, index) => {
+    columns[index % columnCount].push(item);
+  });
+  return columns;
 }
 
 function buildMonthlySeries(records: MdrRecord[]) {
