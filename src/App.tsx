@@ -22,6 +22,7 @@ type TabKey =
   | 'AI Letters'
   | 'Documentation'
   | 'Due Dates & Notifications'
+  | 'Manager View'
   | 'Profile';
 
 type ReviewDetailTab = 'Overview' | 'Devices' | 'Patients' | 'Contacts';
@@ -49,6 +50,7 @@ const TAB_LABELS: Record<TabKey, string> = {
   'AI Letters': 'AI Letters',
   Documentation: 'Documentation',
   'Due Dates & Notifications': 'Due Dates & Notifications',
+  'Manager View': "Manager's View",
   Profile: 'Profile',
 };
 
@@ -393,7 +395,6 @@ export default function App() {
   const [activeTab, setActiveTab] = useState<TabKey>('Overview');
   const [presentationSlideIndex, setPresentationSlideIndex] = useState(0);
   const [showPresentationModal, setShowPresentationModal] = useState(false);
-  const [showManagerView, setShowManagerView] = useState(false);
   const [selectedIssueId, setSelectedIssueId] = useState(issueItems[0].id);
   const [selectedAiLetterId, setSelectedAiLetterId] = useState(aiLetters[0].id);
   const [selectedDocumentationEntryId, setSelectedDocumentationEntryId] = useState('DOC-RR-2026-03');
@@ -842,7 +843,7 @@ export default function App() {
             >
               Presentation
             </button>
-            <button className="header-link-button" onClick={() => setShowManagerView(true)}>
+            <button className="header-link-button" onClick={() => setActiveTab('Manager View')}>
               Manager&apos;s view
             </button>
           </div>
@@ -2032,6 +2033,52 @@ export default function App() {
           </section>
         )}
 
+        {activeTab === 'Manager View' && (
+          <section className="panel-stack">
+            <section className="section-header">
+              <div>
+                <p className="eyebrow">Manager&apos;s view</p>
+                <h2>Patricia Gomez</h2>
+                <p className="subdued">Reviewer workload, assigned product codes, and near-term due work.</p>
+              </div>
+              <button className="text-button" onClick={() => setActiveTab('Overview')}>
+                Back to overview
+              </button>
+            </section>
+
+            <section className="panel-stack">
+              {managerReviewers.map((reviewer) => (
+                <article key={reviewer.name} className="card manager-row-card">
+                  <div className="manager-row-main">
+                    <div className="manager-row-identity">
+                      <p className="eyebrow">{reviewer.team}</p>
+                      <h3>{reviewer.name}</h3>
+                      <p className="subdued">Product codes: {reviewer.productCodes.join(', ')}</p>
+                    </div>
+                    <div className="manager-row-stats">
+                      <div>
+                        <span>Total workload</span>
+                        <strong>{reviewer.totalWorkload}</strong>
+                      </div>
+                      <div>
+                        <span>Routine due next 30 days</span>
+                        <strong>{reviewer.routineDue30}</strong>
+                      </div>
+                      <div>
+                        <span>High priority due next 7 days</span>
+                        <strong>{reviewer.highPriorityDue7}</strong>
+                      </div>
+                    </div>
+                    <button className="primary-button" onClick={() => setActiveTab('Overview')}>
+                      Open reviewer workspace
+                    </button>
+                  </div>
+                </article>
+              ))}
+            </section>
+          </section>
+        )}
+
         {activeTab === 'AI Letters' && (
           <section className="panel-stack">
             <section className="section-header">
@@ -2565,8 +2612,7 @@ export default function App() {
             <section className="presentation-toolbar">
               <div>
                 <p className="eyebrow">Presentation</p>
-                <h2>MDR Review Prototype</h2>
-                <p className="subdued">Short, high-level walkthrough for team discussion.</p>
+                <h3 className="presentation-modal-title">MDR Review Prototype</h3>
               </div>
               <div className="pill-row wrap">
                 <button
@@ -2622,54 +2668,6 @@ export default function App() {
                 />
               ))}
             </section>
-          </div>
-        </div>
-      )}
-      {showManagerView && (
-        <div className="modal-backdrop" onClick={() => setShowManagerView(false)}>
-          <div className="modal-card manager-modal-card" onClick={(event) => event.stopPropagation()}>
-            <div className="card-header">
-              <div>
-                <p className="eyebrow">Manager&apos;s view</p>
-                <h2>Patricia Gomez</h2>
-                <p className="subdued">Supervisory reviewer overview across assigned portfolios.</p>
-              </div>
-              <button className="pill" onClick={() => setShowManagerView(false)}>
-                Close
-              </button>
-            </div>
-            <div className="manager-reviewer-grid">
-              {managerReviewers.map((reviewer) => (
-                <button
-                  key={reviewer.name}
-                  className="manager-reviewer-card"
-                  onClick={() => {
-                    setShowManagerView(false);
-                    setActiveTab('Overview');
-                  }}
-                >
-                  <div className="issue-card-top">
-                    <strong>{reviewer.name}</strong>
-                    <span className="badge neutral">{reviewer.team}</span>
-                  </div>
-                  <p>Product codes: {reviewer.productCodes.join(', ')}</p>
-                  <div className="manager-reviewer-stats">
-                    <div>
-                      <span>Total workload</span>
-                      <strong>{reviewer.totalWorkload}</strong>
-                    </div>
-                    <div>
-                      <span>Routine due next 30 days</span>
-                      <strong>{reviewer.routineDue30}</strong>
-                    </div>
-                    <div>
-                      <span>High priority due next 7 days</span>
-                      <strong>{reviewer.highPriorityDue7}</strong>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
           </div>
         </div>
       )}

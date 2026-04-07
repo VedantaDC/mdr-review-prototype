@@ -1310,6 +1310,49 @@ details summary {
   width: min(1120px, 100%);
 }
 
+.presentation-modal-title {
+  margin: 4px 0 0;
+  font-size: 1.35rem;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+}
+
+.manager-row-card {
+  min-height: 0;
+}
+
+.manager-row-main {
+  display: grid;
+  grid-template-columns: 1.2fr 1.5fr auto;
+  gap: 20px;
+  align-items: center;
+}
+
+.manager-row-identity h3 {
+  margin: 6px 0 8px;
+}
+
+.manager-row-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.manager-row-stats span {
+  display: block;
+  color: #6b7a7f;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.manager-row-stats strong {
+  display: block;
+  margin-top: 6px;
+  font-size: 1.25rem;
+}
+
 .manager-reviewer-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1460,7 +1503,9 @@ mark {
   }
 
   .manager-reviewer-grid,
-  .manager-reviewer-stats {
+  .manager-reviewer-stats,
+  .manager-row-stats,
+  .manager-row-main {
     grid-template-columns: 1fr;
   }
 }
